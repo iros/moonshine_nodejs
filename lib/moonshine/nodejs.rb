@@ -3,7 +3,10 @@ require 'pathname'
 # Define options for this plugin via the <tt>configure</tt> method
 # in your application manifest:
 #
-#    configure(:nodejs => {:version => '0.5.4'})
+#    configure(:nodejs => {
+#       :version      => '0.5.4', 
+#       :npm_version  => '1.0.26', 
+#       :npm_clean    => 'yes'})
 #
 # Moonshine will autoload plugins, just call the recipe(s) you need in your
 # manifests:
@@ -63,7 +66,9 @@ module Moonshine
       #    options[:foo]   # => true
 
       options = {
-        :version => '0.4.11'
+        :version => '0.4.11',
+        :npm_version  => '1.0.26',
+        :npm_clean    => 'yes'
       }.merge(user_options)
 
       # dependecies for install
@@ -85,7 +90,8 @@ module Moonshine
         :cwd      => '/opt/local/src',
         :command  => "wget #{get_url(options[:version])}",
         :creates  => "/opt/local/src/#{get_file(options[:version])}",
-        :logoutput => true
+        :logoutput => true,
+        :unless   => "test \"`node --version`\" = \"v#{options[:version]}\""
 
       exec 'untar node.js',
         :require  => exec('download node.js'),
@@ -98,42 +104,49 @@ module Moonshine
         :require  => exec('untar node.js'),
         :cwd      => "/opt/local/src/#{get_folder(options[:version])}",
         :command  => configure_command,
-        :logoutput => true
+        :logoutput => true,
+        :unless   => "test \"`node --version`\" = \"v#{options[:version]}\""
 
       exec 'make node.js',
         :require  => exec('configure node.js'),
         :cwd      => "/opt/local/src/#{get_folder(options[:version])}",
         :command  => make_command,
-        :logoutput => true
+        :logoutput => true,
+        :creates  => "/opt/local/src/#{get_folder(options[:version])}/build",
+        :unless   => "test \"`node --version`\" = \"v#{options[:version]}\""
       
       exec 'make install node.js',
         :require  => exec('make node.js'),
         :cwd      => "/opt/local/src/#{get_folder(options[:version])}",
         :command  => install_command,
         :creates  => '/opt/local/node/bin',
-        :logoutput => true
+        :logoutput => true,
+        :creates  => '/opt/local/lib/node',
+        :unless   => "test \"`node --version`\" = \"v#{options[:version]}\""
 
-      exec 'set vars',
+      exec 'install npm',
         :require  => exec('make install node.js'),
         :command  => [
+          "bash -c 'export PATH=/opt/local/bin:$PATH'",
+          'wget http://npmjs.org/install.sh',
+          'chmod 700 install.sh',
+          "clean=#{options[:npm_clean]} ./install.sh"
+        ].join(' && '),
+        :cwd      => "/opt/local/src/#{get_folder(options[:version])}",
+        :logoutput => true,
+        :unless   => "test \"`npm --version`\" = \"#{options[:npm_version]}\""
+
+      exec 'set vars',
+        :require  => exec('install npm'),
+        :command  => [
             "echo 'export PATH=/opt/local/bin:$PATH' >> ~/.profile",
-            "echo 'export NODE_PATH=/opt/local:/opt/local/lib/node_modules' >> ~/.profile",
+            'echo "export NODE_PATH=`npm root -g`" >> ~/.profile',
           ].join(' && '),
         :user     => 'rails',
         :group    => 'rails',
-        :logoutput => true
+        :logoutput => true,
+        :unless   => "test \"`npm --version`\" = \"#{options[:npm_version]}\""
 
-      exec 'install npm',
-        :require  => exec('set vars'),
-        :command  => [
-          "bash -c 'export PATH=/opt/local/bin:$PATH'",
-          "bash -c 'export NODE_PATH=/opt/local:/opt/local/lib/node_modules'",
-          'wget http://npmjs.org/install.sh',
-          'chmod 700 install.sh',
-          'clean=yes ./install.sh'
-        ].join(' && '),
-        :cwd      => "/opt/local/src/#{get_folder(options[:version])}",
-        :logoutput => true
     end
     
   end

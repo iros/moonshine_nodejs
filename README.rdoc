@@ -8,6 +8,8 @@ server.
 
 Options:
   :version => '0.4.11' (default)
+  :npm_version  => '1.0.26' (default)
+  :npm_clean    => 'yes' (default)
 
 This plugin can install the latest unstable version but defaults to 0.4.11.
 
@@ -16,7 +18,10 @@ This plugin can install the latest unstable version but defaults to 0.4.11.
 * <tt>script/plugin install git://github.com/iros/moonshine_nodejs.git</tt>
 * To customize rules, use the <tt>configure</tt> method:
 
-    configure(:nodejs => { :version => '0.4.11' })
+    configure(:nodejs => {
+        :version      => '0.5.4', 
+        :npm_version  => '1.0.26', 
+        :npm_clean    => 'yes'})
 
 * Include the recipe in your Moonshine manifest.
     recipe :nodejs
