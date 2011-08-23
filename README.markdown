@@ -1,0 +1,27 @@
+= Moonshine::Nodejs
+
+=== A plugin for installing Node.js and npm (from source)
+
+This plugin installs and configures node.js for your server. Just
+include the plugin and recupe, deploy and you will have node.js on your 
+server.
+
+Options:
+  :version => '0.4.11' (default)
+
+This plugin can install the latest unstable version but defaults to 0.4.11.
+
+=== Instructions
+
+* <tt>script/plugin install git://github.com/iros/moonshine_nodejs.git</tt>
+* To customize rules, use the <tt>configure</tt> method:
+
+    configure(:nodejs => { :version => '0.4.11' })
+
+* Include the recipe in your Moonshine manifest.
+    recipe :nodejs
+
+
+== TODO:
+
+Write spec tests.
